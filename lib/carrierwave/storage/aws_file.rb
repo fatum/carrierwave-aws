@@ -37,7 +37,7 @@ module CarrierWave
       end
 
       def read
-        file.read(uploader_read_options)
+        file.get(uploader_read_options)
       end
 
       def size
@@ -45,7 +45,7 @@ module CarrierWave
       end
 
       def store(new_file)
-        @file = bucket.objects[path].write(uploader_write_options(new_file))
+        @file = bucket.object(path).upload_file(new_file.path, uploader_write_options(new_file))
 
         true
       end
@@ -55,7 +55,7 @@ module CarrierWave
       end
 
       def url(options = {})
-        if uploader.aws_acl != :public_read
+        if uploader.aws_acl != 'public-read'
           authenticated_url(options)
         else
           public_url
@@ -63,7 +63,7 @@ module CarrierWave
       end
 
       def authenticated_url(options = {})
-        file.url_for(:read, { expires: uploader.aws_authenticated_url_expiration }.merge(options)).to_s
+        file.presigned_url(:get, { expires_in: uploader.aws_authenticated_url_expiration }.merge(options)).to_s
       end
 
       def public_url
@@ -75,7 +75,13 @@ module CarrierWave
       end
 
       def copy_to(new_path)
-        file.copy_to(bucket.objects[new_path], uploader_copy_options)
+        options = uploader_copy_options.merge(
+          copy_source: path,
+          key:         new_path,
+          bucket:      uploader.aws_bucket
+        )
+
+        connection.copy_object options
       end
 
       def uploader_read_options
@@ -87,8 +93,7 @@ module CarrierWave
         aws_write_options = uploader.aws_write_options || {}
 
         { acl:          uploader.aws_acl,
-          content_type: new_file.content_type,
-          file:         new_file.path
+          content_type: new_file.content_type
         }.merge(aws_attributes).merge(aws_write_options)
       end
 
@@ -105,11 +110,11 @@ module CarrierWave
       private
 
       def bucket
-        @bucket ||= connection.buckets[uploader.aws_bucket]
+        @bucket ||= ::Aws::S3::Bucket.new(name: uploader.aws_bucket, client: connection)
       end
 
       def file
-        @file ||= bucket.objects[path]
+        @file ||= bucket.object(path)
       end
     end
   end

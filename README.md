@@ -38,13 +38,14 @@ the use of `aws_bucket` instead of `fog_directory`, and `aws_acl` instead of
 CarrierWave.configure do |config|
   config.storage    = :aws
   config.aws_bucket = ENV.fetch('S3_BUCKET_NAME')
-  config.aws_acl    = :public_read
+  config.aws_acl    = 'public-read'
   config.asset_host = 'http://example.com'
   config.aws_authenticated_url_expiration = 60 * 60 * 24 * 365
 
   config.aws_credentials = {
-    access_key_id:     ENV.fetch('AWS_ACCESS_KEY_ID'),
-    secret_access_key: ENV.fetch('AWS_SECRET_ACCESS_KEY')
+    access_key_id:      ENV.fetch('AWS_ACCESS_KEY_ID'),
+    secret_access_key:  ENV.fetch('AWS_SECRET_ACCESS_KEY'),
+    region:             ENV.fetch('AWS_REGION')
   }
 end
 ```
@@ -55,8 +56,7 @@ If you want to supply your own AWS configuration, put it inside
 ```ruby
 config.aws_credentials = {
   access_key_id:     ENV['AWS_ACCESS_KEY_ID'],
-  secret_access_key: ENV['AWS_SECRET_ACCESS_KEY'],
-  config: AWS.config(my_aws_options)
+  secret_access_key: ENV['AWS_SECRET_ACCESS_KEY']
 }
 ```
 
@@ -72,7 +72,7 @@ If you have a custom uploader that specifies additional headers for each URL, pl
 ```ruby
   class MyUploader < Carrierwave::Uploader::Base
     # You can find full list of custom headers in AWS SDK documentation on
-    # AWS::S3::S3Object
+    # Aws::S3::Object
     def download_url(filename)
       url(response_content_disposition: %Q{attachment; filename="#{filename}"})
     end

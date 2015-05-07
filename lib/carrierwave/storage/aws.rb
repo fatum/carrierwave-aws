@@ -1,4 +1,5 @@
-require 'aws/s3'
+require 'aws-sdk'
+require 'carrierwave/storage/aws_file'
 
 module CarrierWave
   module Storage
@@ -23,12 +24,15 @@ module CarrierWave
 
       def connection
         @connection ||= begin
-          self.class.connection_cache[credentials] ||= ::AWS::S3.new(*credentials)
+          self.class.connection_cache[credentials] ||= ::Aws::S3::Client.new(
+            region: credentials[:region],
+            credentials: Aws::Credentials.new(credentials[:access_key_id], credentials[:secret_access_key])
+          )
         end
       end
 
       def credentials
-        [uploader.aws_credentials].compact
+        [uploader.aws_credentials].compact.first
       end
     end
   end

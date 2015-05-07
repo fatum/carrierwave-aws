@@ -14,7 +14,7 @@ describe CarrierWave::Storage::AWS do
 
   describe '#connection' do
     it 'instantiates a new connection with credentials' do
-      expect(AWS::S3).to receive(:new).with(credentials)
+      expect(Aws::S3::Client).to receive(:new).with(credentials)
 
       storage.connection
     end
