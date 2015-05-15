@@ -45,9 +45,9 @@ module CarrierWave
       end
 
       def store(new_file)
-        @file = bucket.object(path).upload_file(new_file.path, uploader_write_options(new_file))
+        bucket.object(path).upload_file(new_file.path, uploader_write_options(new_file))
 
-        true
+        file
       end
 
       def to_file
